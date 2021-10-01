@@ -84,7 +84,7 @@ void loop()
           float uP = kp * error;
           float integral = integrate();
           float uI = -ki * integral;
-          float uD = kd * get_derivative(record_count, 1);;
+          float uD = -kd * get_derivative(record_count, 1);
           float U = uP + uI + uD;
           if (abs(error) >= 5) {
             setMovement(-U, abs(U)/4.0);
@@ -110,13 +110,12 @@ void loop()
 }
 
 void storeError() {
-  int move_count = 50;
   if (record_count >= sizeof(error_record)) {
-    for (int i=0; i < record_count - move_count; i++) {
-      record_count[i] = record_count[i + move_count];
-      timestamp_record[i] = timestamp_record[i + move_count];
+    for (int i=0; i < record_count-1; i++) {
+      record_count[i] = record_count[i+1];
+      timestamp_record[i] = timestamp_record[i+1];
     }
-    record_count -= move_count;
+    record_count += -1;
   }
   error_record[record_count] = error;
   timestamp_record[record_count] = (micros() - previousMicro) / 1000.0;
@@ -219,13 +218,13 @@ bool use_zn_tuning = true;
 // Bool to check whether it's been done already and doesn't need to be repeated
 bool zn_tuning_done = false;
 
-float get_derivative(int err_count, int delta){
+float get_derivative(int err_count){
   // So, top = numerator
-  float top = error_record[err_count-delta] - error_record[err_count];
+  float top = error_record[err_count-1] - error_record[err_count];
 
   // bot = denominator
   // Reason it's this value it because this is the only way of getting h
-  float bot = timestamp_error[err_count-delta] - timestamp_error[err_count];
+  float bot = timestamp_error[err_count-1] - timestamp_error[err_count];
   return top/bot;
 }
 
