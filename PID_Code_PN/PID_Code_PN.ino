@@ -171,16 +171,14 @@ void readInput()
           
           convertData(record);
           if(i==4){
-          target = PID_values[0];
-          kp = PID_values[1];
-          ki = PID_values[2];
-          kd = PID_values[3];
-          //Serial.print("Entered Values:");
-          printData(PID_values);
-          }
-          else
-          {
-          //Serial.println("Enter correct number of values separated by commas!!");            
+            target = PID_values[0];
+            kp = PID_values[1];
+            ki = PID_values[2];
+            kd = PID_values[3];
+            //Serial.print("Entered Values:");
+            printData(PID_values);
+          } else if(i==1){
+            target = PID_values[0];
           }
         }
     }
