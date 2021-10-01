@@ -18,6 +18,7 @@ unsigned long previousMicro = 0;
 
 int motorSpeed = 0; // speed of the motor, values between 0 and 255
 int target = 512; // position (as read by potentiometer) to move the motor to, default value 512
+int prev_target = target;
 
 // ******** <TODO> **********************
 // ******** define the different gains **********************
@@ -26,9 +27,13 @@ float ki = 0.0; // integral gain
 float kd = 0.0; // derivative gain
 
 float error = 0;
-float error_record[1000];
-float timestamp_record[1000];
+float error_record[5000];
+float timestamp_record[5000];
+
+const float record_interval = 1; // ms to wait between records
+float last_record_time = 0;
 int record_count = 0;
+
 // with INTERVAL=10, record_count ~= 530 at time step
 
 int pos = 0; // current position for plotting
@@ -57,29 +62,37 @@ void loop()
         //  ******** <TODO> **********************
         //  ******** implement your code  here **********************
         unsigned long ct = millis();
+
+        if (prev_target != target) {
+          record_count = 0;
+        }
         
         readInput();
         pos = analogRead(SENSOR_PIN);
         error = target - pos;
 
-        error_record[record_count] = error;
-        timestamp_record[record_count] = (micros() - previousMicro) / 1000.0;
-        ++record_count;
+        // recording the error less often to fix integration and differentiation on too short intervals
+        float ct_micro = micros()/1000.0;
+        if (ct_micro - last_record_time > record_interval) {
+          storeError();
+          last_record_time = ct_micro;
+        }
 
         if(ct-previousTime > INTERVAL){
+          storeError();
+          
           float uP = kp * error;
           float integral = integrate();
           float uI = -ki * integral;
           float uD = 0;
           float U = uP + uI + uD;
           if (abs(error) >= 5) {
-            setMovement(-U, U/4.0);
+            setMovement(-U, abs(U)/4.0);
           } else {
             setMovement(-U, 0);
           }
           previousTime = millis();
           previousMicro = micros();
-          record_count = 0;
 
           // MORE GARBAGE CODE BY NICK
           if(use_zn_tuning && !zn_tuning_done){
@@ -96,7 +109,21 @@ void loop()
     
 }
 
+void storeError() {
+  if (record_count >= sizeof(error_record)) {
+    for (int i=0; i < record_count-1; i++) {
+      record_count[i] = record_count[i+1];
+      timestamp_record[i] = timestamp_record[i+1];
+    }
+    record_count += -1;
+  }
+  error_record[record_count] = error;
+  timestamp_record[record_count] = (micros() - previousMicro) / 1000.0;
+  ++record_count;
+}
+
 float integrate() {
+  // trapezoid rule
   float integral = 0;
   for (int i=0; i < record_count-1; i++) {
     float t0 = timestamp_record[i];
