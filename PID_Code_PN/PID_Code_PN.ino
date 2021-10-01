@@ -17,20 +17,20 @@ unsigned long previousTime = 0;
 unsigned long previousMicro = 0;
 
 int motorSpeed = 0; // speed of the motor, values between 0 and 255
-int target = 512; // position (as read by potentiometer) to move the motor to, default value 512
+int target = 512; // position (as read by potentiometer) to move the motor to, default value 500
 int prev_target = target;
 
 // ******** <TODO> **********************
 // ******** define the different gains **********************
-float kp = 3.0; // proportional gain
-float ki = 0.0; // integral gain
-float kd = 0.0; // derivative gain
+float kp = 12.0; // proportional gain
+float ki = 0.18172; // integral gain
+float kd = 198.0978; // derivative gain
 
 float error = 0;
-float error_record[5000];
-float timestamp_record[5000];
+float error_record[2000];
+float timestamp_record[2000];
 
-const float record_interval = 1; // ms to wait between records
+const float record_interval = INTERVAL; // ms to wait between records
 float last_record_time = 0;
 int record_count = 0;
 
@@ -48,7 +48,7 @@ byte indx = 0;
 int error_bounds = 1;
 
 // Bool to decide on whether to use this tuning or not
-bool use_zn_tuning = true;
+bool use_zn_tuning = false;
 
 // Bool to check whether it's been done already and doesn't need to be repeated
 bool zn_tuning_done = false;
@@ -85,17 +85,22 @@ void loop()
         if (ct_micro - last_record_time > record_interval) {
           storeError();
           last_record_time = ct_micro;
+
+          //print actual motor position and target value to serial-monitor/plotter
+          Serial.print(pos);
+          Serial.print(" ");   
+          Serial.println(target);
         }
 
         if(ct-previousTime > INTERVAL){
-          storeError();
+          //storeError();
           
           float uP = kp * error;
           float integral = integrate();
           float uI = -ki * integral;
           float uD = -kd * get_derivative(record_count, 1);
           float U = uP + uI + uD;
-          if (abs(error) >= 5) {
+          if (abs(error) >= 7) {
             setMovement(-U, abs(U)/4.0);
           } else {
             setMovement(-U, 0);
@@ -103,18 +108,11 @@ void loop()
           previousTime = millis();
           previousMicro = micros();
 
-          // MORE GARBAGE CODE BY NICK
           if(use_zn_tuning && !zn_tuning_done){
             update_ziegler_nichols_tuning(error, target);
           }
-          // GARBAGE CODE ENDS HERE
           
         }
-        
-        //print actual motor position and target value to serial-monitor/plotter
-        Serial.print(pos);
-        Serial.print(" ");   
-        Serial.println(target);
     
 }
 
@@ -142,7 +140,7 @@ float integrate() {
     float f1 = error_record[i+1];
     integral += (t1 - t0) * 0.5 * (f1 + f0);
   }
-  return integral;
+  return max(min(integral,20),-20);
 }
 
 // method to set direction and speed of the motor
