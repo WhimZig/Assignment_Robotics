@@ -84,7 +84,7 @@ void loop()
           float uP = kp * error;
           float integral = integrate();
           float uI = -ki * integral;
-          float uD = 0;
+          float uD = kd * get_derivative(record_count, 1);;
           float U = uP + uI + uD;
           if (abs(error) >= 5) {
             setMovement(-U, abs(U)/4.0);
