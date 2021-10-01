@@ -110,12 +110,13 @@ void loop()
 }
 
 void storeError() {
+  int move_count = 50;
   if (record_count >= sizeof(error_record)) {
-    for (int i=0; i < record_count-1; i++) {
-      record_count[i] = record_count[i+1];
-      timestamp_record[i] = timestamp_record[i+1];
+    for (int i=0; i < record_count - move_count; i++) {
+      record_count[i] = record_count[i + move_count];
+      timestamp_record[i] = timestamp_record[i + move_count];
     }
-    record_count += -1;
+    record_count -= move_count;
   }
   error_record[record_count] = error;
   timestamp_record[record_count] = (micros() - previousMicro) / 1000.0;
