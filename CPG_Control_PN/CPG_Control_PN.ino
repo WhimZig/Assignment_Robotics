@@ -31,7 +31,7 @@ int interval = 0; //variable to store actual measured update time of the PID
 
 //CPG parameter
 double frequency = 0.5; // oscillator frequency
-double rateOfFrequency = 0;
+double rateOfFrequency = 1;
 double targetFrequency = 0.5;
 
 double w = 0.025; // we assume that all oscillators use same coupling weight
@@ -100,15 +100,14 @@ void loop(){
       readInput(); //read input command from serial monitor (do NOT modify!!)
       
       //+++++++++++++++IMPLEMENT your CPG control code here BELOW !!!++++++++++++++++++++++++++++++++++++
-                          
-      
+
+      updateVariables();
 
       for (int i = 0; i < NUM_OSCILLATORS; i++) {
 
         // Calculate CPG here
-        //double deriv_phase = compute_phase_derivative(i);
-        //double deriv_r = equation_2(i);
-        
+        double deriv_phase = compute_phase_derivative(i);
+        osc[i].phase = osc[i].phase + deriv_phase * interval /1000.0;
         osc[i].pos = equation_3(i);
 
         // set motor to new position (do NOT modify!!)
@@ -285,6 +284,17 @@ double equation_3(int osc_num){
   double res = r*sin(fi) + x;
   return res;
 }
+
+double updateVariables() {
+  double deriv_freq = rateOfFrequency * (targetFrequency - frequency);
+  frequency = frequency + deriv_freq * interval / 1000.0;
+                          
+  for (int i=0; i < NUM_OSCILLATORS; i++) {
+    double deriv_r = equation_2(i);
+    osc[i].amplitude = osc[i].amplitude + deriv_r * interval / 1000.0;
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 //void zeroCalib()
 //{
