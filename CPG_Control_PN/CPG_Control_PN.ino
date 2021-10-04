@@ -101,7 +101,7 @@ void loop(){
       
       //+++++++++++++++IMPLEMENT your CPG control code here BELOW !!!++++++++++++++++++++++++++++++++++++
 
-      updateVariables();
+      updateVariables(interval);
 
       for (int i = 0; i < NUM_OSCILLATORS; i++) {
 
@@ -285,7 +285,7 @@ double equation_3(int osc_num){
   return res;
 }
 
-double updateVariables() {
+double updateVariables(double interval) {
   double deriv_freq = rateOfFrequency * (targetFrequency - frequency);
   frequency = frequency + deriv_freq * interval / 1000.0;
                           
