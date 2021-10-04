@@ -106,7 +106,10 @@ void loop(){
       for (int i = 0; i < NUM_OSCILLATORS; i++) {
 
         // Calculate CPG here
-        int temp = 5;
+        //double deriv_phase = compute_phase_derivative(i);
+        //double deriv_r = equation_2(i);
+        
+        osc[i].pos = equation_3(i);
 
         // set motor to new position (do NOT modify!!)
         osc[i].angle_motor = map(osc[i].pos,0,180,SERVOMIN[i],SERVOMAX[i]);//(do NOT modify!!)
