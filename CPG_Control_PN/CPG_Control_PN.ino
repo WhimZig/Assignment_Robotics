@@ -255,6 +255,22 @@ void readInput()
       buffer += " "; 
     }
 }
+
+double equation_2(int osc_num){
+  double R = osc[osc_num].targetAmplitude;
+  double r = osc[osc_num].amplitude;
+  return a*(R-r);
+}
+
+double equation_3(int osc_num){
+  // This method assumes that the phase is in radians already
+  double r = osc[osc_num].amplitude;
+  double fi = osc[osc_num].phase;
+  double x = osc[osc_num].offset;
+
+  double res = r*sin(fi) + x;
+  return res;
+}
 ///////////////////////////////////////////////////////////////////////////////////
 //void zeroCalib()
 //{
