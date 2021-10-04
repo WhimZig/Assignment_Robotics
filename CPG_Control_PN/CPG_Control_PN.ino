@@ -131,6 +131,17 @@ void loop(){
     }
 }
 
+double compute_phase_derivative(int i) {
+  double sum = 0;
+  for (int j=0; j < sizeof(osc)/sizeof(oscilator); j++) {
+    if (i != j) {
+      sum += w * osc[i].coupling[j] * osc[j].amplitude * 
+        sin(osc[j].phase - osc[i].phase - osc[i].phaseBias[j]);
+    }
+  }
+  return 2*PI*frequency + sum;
+}
+
 /////////////////Function for Reading Inputs via the Serial Monitor//////////////////////////////
 ///////////////////////////- PLEASE DO NOT MODIFY!/////////////////////////////////
 void readInput() 
