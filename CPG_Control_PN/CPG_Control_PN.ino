@@ -133,7 +133,7 @@ void loop(){
 
 double compute_phase_derivative(int i) {
   double sum = 0;
-  for (int j=0; j < sizeof(osc)/sizeof(oscilator); j++) {
+  for (int j=0; j < sizeof(osc)/sizeof(oscillator); j++) {
     if (i != j) {
       sum += w * osc[i].coupling[j] * osc[j].amplitude * 
         sin(osc[j].phase - osc[i].phase - osc[i].phaseBias[j]);
@@ -280,7 +280,7 @@ double equation_3(int osc_num){
   // This method assumes that the phase is in radians already
   double r = osc[osc_num].amplitude;
   double fi = osc[osc_num].phase;
-  double x = osc[osc_num].offset;
+  double x = osc[osc_num].targetOffset;
 
   double res = r*sin(fi) + x;
   return res;
