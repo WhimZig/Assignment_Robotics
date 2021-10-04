@@ -24,7 +24,7 @@ int prev_target = target;
 // ******** define the different gains **********************
 float kp = 12.0; // proportional gain
 float ki = 0.18172; // integral gain
-float kd = 198.0978; // derivative gain
+float kd = 220; // derivative gain
 
 float error = 0;
 float error_record[2000];
