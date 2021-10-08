@@ -37,6 +37,7 @@ double targetFrequency = 0.5;
 double w = 0.025; // we assume that all oscillators use same coupling weight
 double a = 1; // we assume that all oscillators use same adaptation rate for amplitude
 double c = 0.5; // adaptation rate for frequency and offset
+double rate_offset = 0.1; // Adaption rate for offset, it's a new variable for us
 
 //float calib[NUM_OSCILLATORS];
 
@@ -281,10 +282,10 @@ double equation_2(int osc_num){
 
 double offset_dif(int osc_num){
   double X = osc[osc_num].targetOffset;
-  double x = osc[osc_num].offsest;
+  double x = osc[osc_num].offset;
 
   // c is defined as the adaption rate of the offset as well, so we're just using it
-  return c*(X-x);
+  return rate_offset*(X-x);
 }
 
 double equation_3(int osc_num){
