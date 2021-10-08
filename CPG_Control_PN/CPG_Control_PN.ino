@@ -279,6 +279,14 @@ double equation_2(int osc_num){
   return a*(R-r);
 }
 
+double offset_dif(int osc_num){
+  double X = osc[osc_num].targetOffset;
+  double x = osc[osc_num].offsest;
+
+  // c is defined as the adaption rate of the offset as well, so we're just using it
+  return c*(X-x);
+}
+
 double equation_3(int osc_num){
   // This method assumes that the phase is in radians already
   double r = osc[osc_num].amplitude;
@@ -296,6 +304,9 @@ void updateVariables(double interval) {
   for (int i=0; i < NUM_OSCILLATORS; i++) {
     double deriv_r = equation_2(i);
     osc[i].amplitude = osc[i].amplitude + deriv_r * interval / 1000.0;
+
+    double deriv_off = offset_dif(i);
+    osc[i].offset = osc[i].offset + deriv_off * interval/1000.0;
     
   }
 
