@@ -16,7 +16,7 @@ int POTIMAX[]  {694, 747, 710}; //PLEASE ENTER: The upper potentiometer limit (P
 #include "study.h"
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
-const unsigned int NUM_OSCILLATORS = 3; // this number has to match entries in array osc[] (do NOT modify!!)
+const int NUM_OSCILLATORS = 3; // this number has to match entries in array osc[] (do NOT modify!!)
 
 //Poti variables
 int POTIPINS[] = {14, 15, 16, 17, 18, 19}; //Do NOT modify!! Analog pins to which the potis' of the servos are connected (A0=14, A1=15, A2=16, ...)
@@ -90,10 +90,13 @@ void setup()
 }
 
 ////////////////////////////// loop //////////////////////////////////////
-void loop(){   
+void loop(){
+  //Serial.println("outside if");
    
     currentMillis = millis(); //update the current time (do NOT modify!!)
     if (currentMillis - previousMillis >= timeStep){//CPG update interval (10ms)(do NOT modify!!)
+      //Serial.println("inside if");
+      
       interval=currentMillis - previousMillis; //calculate actual interval time (do NOT modify!!)
       saveTime(interval); //saves current interval time (do NOT modify!!)
       previousMillis = currentMillis; //update the previous time step (do NOT modify!!)
@@ -103,6 +106,7 @@ void loop(){
 
       updateVariables(interval);
 
+      //Serial.println("after update var and before for");
       for (int i = 0; i < NUM_OSCILLATORS; i++) {
 
         // Calculate CPG here
@@ -285,14 +289,17 @@ double equation_3(int osc_num){
   return res;
 }
 
-double updateVariables(double interval) {
+void updateVariables(double interval) {
   double deriv_freq = rateOfFrequency * (targetFrequency - frequency);
   frequency = frequency + deriv_freq * interval / 1000.0;
-                          
+
   for (int i=0; i < NUM_OSCILLATORS; i++) {
     double deriv_r = equation_2(i);
     osc[i].amplitude = osc[i].amplitude + deriv_r * interval / 1000.0;
+    
   }
+
+  //Serial.println("left the for loop");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
