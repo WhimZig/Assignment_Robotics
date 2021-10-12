@@ -62,8 +62,8 @@ typedef struct
 oscillator osc[NUM_OSCILLATORS] =
 {
     {0,30,30,90,90,0,0,0,0,0,{0,PI,0},{0,1,0}},
-    {0,30,30,90,90,0,0,0,0,0,{-PI,0,PI},{1,0,1}},
-    {0,30,30,90,90,0,0,0,0,0,{0,-PI,0},{0,1,0}}
+    {0,30,30,90,90,0,0,0,0,0,{-PI,0,PI/2},{1,0,1}},
+    {0,30,30,90,90,0,0,0,0,0,{0,-PI/2,0},{0,1,0}}
 };
 
 // strings for reading input
@@ -141,7 +141,7 @@ double compute_phase_derivative(int osc_num) {
   double sum = 0;
   for (int j=0; j < NUM_OSCILLATORS; j++) {
     if (i != j) {
-      sum += w * osc[i].coupling[j] * osc[j].amplitude *
+      sum += w * osc[i].coupling[j] * osc[j].amplitude * 
         sin(osc[j].phase - osc[i].phase - osc[i].phaseBias[j]);
     }
   }
@@ -156,6 +156,26 @@ double output_function(int osc_num){
 
   double res = r*sin(fi) + x;
   return res;
+}
+
+// alternative output function (used for walk-like behavior during competition, not shown in assignment)
+// to use, replace "sin(fi)" in the above "output_function" with "holding_sin(fi)" 
+// we hope this might help with more walking-like behavior for interlocking legs
+double holding_sin(double fi) {
+  double phase = fi / (2*PI);
+  if (phase < 0) { phase -= 1; }
+  phase -= trunc(phase);
+  phase *= 2; // phase in terms of pi
+  if (phase < 0.25 || (phase >= 1.75 && phase < 2)) {
+    return sin(phase*PI * 2);       // for 0.5PI, we return sin at double frequency (UP)
+  } if (phase < 0.75) {
+    return 1;                       // for 0.5PI, we hold at maximum amplitude
+  } if (phase < 1.25) { 
+    return sin((phase-0.5)*PI * 2); // for 0.5PI, we return sin at double frequency (DOWN)
+  } if (phase < 1.75) {
+    return -1;                      // for 0.5PI, we hold at minimum amplitude
+  }
+  return 0; // this return will not be reached, but is here as failsafe
 }
 
 void compute_derivates(int osc_num) {
