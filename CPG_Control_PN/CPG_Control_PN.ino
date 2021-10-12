@@ -17,6 +17,7 @@ int POTIMAX[]  {694, 747, 710}; //PLEASE ENTER: The upper potentiometer limit (P
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
 const int NUM_OSCILLATORS = 3; // this number has to match entries in array osc[] (do NOT modify!!)
+// third motor wires are not connected, so we are limited to two oscilators in reality
 
 //Poti variables
 int POTIPINS[] = {14, 15, 16, 17, 18, 19}; //Do NOT modify!! Analog pins to which the potis' of the servos are connected (A0=14, A1=15, A2=16, ...)
@@ -27,17 +28,17 @@ int servo_angle[] = { 0, 0, 0}; //Do NOT modify! Array to store mapped poti valu
 unsigned long previousMillis = 0;
 unsigned long currentMillis = 0;
 unsigned long timeStep = 10; // period used to update CPG state variables and servo motor control (do NOT modify!!)
-int interval = 0; //variable to store actual measured update time of the PID
+int interval = 0; //variable to store actual measured update time of the PID (in ms)
 
 //CPG parameter
-double frequency = 0.5; // oscillator frequency
-double rateOfFrequency = 1;
+double frequency = 0.5; // oscillator frequency; the current frequency, which slowly goes to target frequency when that changes
+double gain_frequency = 1; // Adaptation rate for frequency, we replaced c by this variable and gain_offset
+double rateOfFrequency = 0;
 double targetFrequency = 0.5;
 
 double w = 0.025; // we assume that all oscillators use same coupling weight
 double a = 1; // we assume that all oscillators use same adaptation rate for amplitude
-double c = 0.5; // adaptation rate for frequency and offset
-double rate_offset = 0.1; // Adaption rate for offset, it's a new variable for us
+double gain_offset = 0.1; // we assume that all oscillators use same adaptation rate for offset
 
 //float calib[NUM_OSCILLATORS];
 
@@ -111,9 +112,9 @@ void loop(){
       for (int i = 0; i < NUM_OSCILLATORS; i++) {
 
         // Calculate CPG here
-        double deriv_phase = compute_phase_derivative(i);
-        osc[i].phase = osc[i].phase + deriv_phase * interval /1000.0;
-        osc[i].pos = equation_3(i);
+        osc[i].rateOfPhase = compute_phase_derivative(i);
+        osc[i].phase = osc[i].phase + osc[i].rateOfPhase * interval /1000.0;
+        osc[i].pos = output_function(i);
 
         // set motor to new position (do NOT modify!!)
         osc[i].angle_motor = map(osc[i].pos,0,180,SERVOMIN[i],SERVOMAX[i]);//(do NOT modify!!)
@@ -135,15 +136,47 @@ void loop(){
     }
 }
 
-double compute_phase_derivative(int i) {
+double compute_phase_derivative(int osc_num) {
+  int i = osc_num;
   double sum = 0;
-  for (int j=0; j < sizeof(osc)/sizeof(oscillator); j++) {
+  for (int j=0; j < NUM_OSCILLATORS; j++) {
     if (i != j) {
       sum += w * osc[i].coupling[j] * osc[j].amplitude * 
         sin(osc[j].phase - osc[i].phase - osc[i].phaseBias[j]);
     }
   }
   return 2*PI*frequency + sum;
+}
+
+double output_function(int osc_num){
+  // This method assumes that the phase is in radians already
+  double r = osc[osc_num].amplitude;
+  double fi = osc[osc_num].phase;
+  double x = osc[osc_num].offset;
+
+  double res = r*sin(fi) + x;
+  return res;
+}
+
+void compute_derivates(int osc_num) {
+  double R = osc[osc_num].targetAmplitude;
+  double r = osc[osc_num].amplitude;
+  osc[osc_num].rateOfAmplitude = a*(R-r);
+  
+  double X = osc[osc_num].targetOffset;
+  double x = osc[osc_num].offset;
+  osc[osc_num].rateOfOffset = gain_offset*(X-x);
+}
+
+void updateVariables(double interval) {
+  rateOfFrequency = gain_frequency * (targetFrequency - frequency);
+  frequency = frequency + rateOfFrequency * interval / 1000.0;
+
+  for (int i=0; i < NUM_OSCILLATORS; i++) {
+    compute_derivates(i);
+    osc[i].amplitude = osc[i].amplitude + osc[i].rateOfAmplitude * interval / 1000.0;
+    osc[i].offset = osc[i].offset + osc[i].rateOfOffset * interval/1000.0;
+  }
 }
 
 /////////////////Function for Reading Inputs via the Serial Monitor//////////////////////////////
@@ -272,46 +305,6 @@ void readInput()
       buffer += "-"; 
       buffer += " "; 
     }
-}
-
-double equation_2(int osc_num){
-  double R = osc[osc_num].targetAmplitude;
-  double r = osc[osc_num].amplitude;
-  return a*(R-r);
-}
-
-double offset_dif(int osc_num){
-  double X = osc[osc_num].targetOffset;
-  double x = osc[osc_num].offset;
-
-  // c is defined as the adaption rate of the offset as well, so we're just using it
-  return rate_offset*(X-x);
-}
-
-double equation_3(int osc_num){
-  // This method assumes that the phase is in radians already
-  double r = osc[osc_num].amplitude;
-  double fi = osc[osc_num].phase;
-  double x = osc[osc_num].targetOffset;
-
-  double res = r*sin(fi) + x;
-  return res;
-}
-
-void updateVariables(double interval) {
-  double deriv_freq = rateOfFrequency * (targetFrequency - frequency);
-  frequency = frequency + deriv_freq * interval / 1000.0;
-
-  for (int i=0; i < NUM_OSCILLATORS; i++) {
-    double deriv_r = equation_2(i);
-    osc[i].amplitude = osc[i].amplitude + deriv_r * interval / 1000.0;
-
-    double deriv_off = offset_dif(i);
-    osc[i].offset = osc[i].offset + deriv_off * interval/1000.0;
-    
-  }
-
-  //Serial.println("left the for loop");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
