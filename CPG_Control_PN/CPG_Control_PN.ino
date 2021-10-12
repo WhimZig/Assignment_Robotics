@@ -10,7 +10,7 @@ int SERVOMAX[]  {456, 450, 465}; //PLEASE ENTER: The upper motor PPM limit (Serv
 int POTIMIN[]  {118, 145, 130}; //PLEASE ENTER: The lower potentiometer limit (Poti Low) as noted in your EDMO box
 int POTIMAX[]  {694, 747, 710}; //PLEASE ENTER: The upper potentiometer limit (Poti High) as noted in your EDMO box
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////// 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 #include "study.h"
@@ -42,10 +42,10 @@ double gain_offset = 0.1; // we assume that all oscillators use same adaptation 
 
 //float calib[NUM_OSCILLATORS];
 
-typedef struct 
+typedef struct
 {
     double phase;                       // phase of the oscillation
-    double amplitude;                   // amplitude of the oscillation 
+    double amplitude;                   // amplitude of the oscillation
     double targetAmplitude;             // amplitude to gradually change to
     double offset;                      // offset for the oscillation (in range of servo 0-180)
     double targetOffset;                // added parameter to offset smoothly
@@ -59,7 +59,7 @@ typedef struct
 } oscillator;
 
 // initalisation with offset 90 for all motors (since servos operate in the range 0-180)
-oscillator osc[NUM_OSCILLATORS] = 
+oscillator osc[NUM_OSCILLATORS] =
 {
     {0,30,30,90,90,0,0,0,0,0,{0,PI,0},{0,1,0}},
     {0,30,30,90,90,0,0,0,0,0,{-PI,0,PI},{1,0,1}},
@@ -71,7 +71,7 @@ String  valueString, indexString;
 String commandString = "Start 0 0";
 ////////////////////////////// setup //////////////////////////////////////
 //(do NOT modify!!)
-void setup() 
+void setup()
 {
     //////////////Initialize Serial Communication//////////////////
     Serial.begin(9600);
@@ -79,8 +79,8 @@ void setup()
     while (!Serial); ////(do NOT modify!!) wait for the USB to serial chip to get ready (really quick!!)Does NOT! wait for the serial monitor to open!!!!
     ///////Initialize SD-Card /////////////////////
     initSD();//(do NOT modify!!)
-    ///////Initialize Real time clock ////////////   
-    initRTC(); //(do NOT modify!!)         
+    ///////Initialize Real time clock ////////////
+    initRTC(); //(do NOT modify!!)
     ///////Motor control/////////////////////////////////
     pwm.begin();
     pwm.setPWMFreq(50);  // Analog servos run at ~60 Hz update
@@ -94,16 +94,16 @@ void setup()
 ////////////////////////////// loop //////////////////////////////////////
 void loop(){
   //Serial.println("outside if");
-   
+
     currentMillis = millis(); //update the current time (do NOT modify!!)
     if (currentMillis - previousMillis >= timeStep){//CPG update interval (10ms)(do NOT modify!!)
       //Serial.println("inside if");
-      
+
       interval=currentMillis - previousMillis; //calculate actual interval time (do NOT modify!!)
       saveTime(interval); //saves current interval time (do NOT modify!!)
       previousMillis = currentMillis; //update the previous time step (do NOT modify!!)
       readInput(); //read input command from serial monitor (do NOT modify!!)
-      
+
       //+++++++++++++++IMPLEMENT your CPG control code here BELOW !!!++++++++++++++++++++++++++++++++++++
 
       updateVariables(interval);
@@ -118,14 +118,14 @@ void loop(){
 
         // set motor to new position (do NOT modify!!)
         osc[i].angle_motor = map(osc[i].pos,0,180,SERVOMIN[i],SERVOMAX[i]);//(do NOT modify!!)
-        osc[i].angle_motor = constrain(osc[i].angle_motor,SERVOMIN[i],SERVOMAX[i]);  //(do NOT modify!!)       
-        pwm.setPWM(i, 0, osc[i].angle_motor); //(do NOT modify!!)         
+        osc[i].angle_motor = constrain(osc[i].angle_motor,SERVOMIN[i],SERVOMAX[i]);  //(do NOT modify!!)
+        pwm.setPWM(i, 0, osc[i].angle_motor); //(do NOT modify!!)
         poti_value[i] = analogRead(POTIPINS[i]);//(do NOT modify!!)
         servo_angle[i] = map(poti_value[i], POTIMIN[i] , POTIMAX[i], 0, 180);//(do NOT modify!!)
 
-      
+
         Serial.print( osc[i].pos);
-        Serial.print (" ");        
+        Serial.print (" ");
       }
       //+++++++++++++++IMPLEMENT your CPG control code here ABOVE!!!++++++++++++++++++++++++++++++++++++
       Serial.println();
@@ -141,7 +141,7 @@ double compute_phase_derivative(int osc_num) {
   double sum = 0;
   for (int j=0; j < NUM_OSCILLATORS; j++) {
     if (i != j) {
-      sum += w * osc[i].coupling[j] * osc[j].amplitude * 
+      sum += w * osc[i].coupling[j] * osc[j].amplitude *
         sin(osc[j].phase - osc[i].phase - osc[i].phaseBias[j]);
     }
   }
@@ -162,7 +162,7 @@ void compute_derivates(int osc_num) {
   double R = osc[osc_num].targetAmplitude;
   double r = osc[osc_num].amplitude;
   osc[osc_num].rateOfAmplitude = a*(R-r);
-  
+
   double X = osc[osc_num].targetOffset;
   double x = osc[osc_num].offset;
   osc[osc_num].rateOfOffset = gain_offset*(X-x);
@@ -181,20 +181,20 @@ void updateVariables(double interval) {
 
 /////////////////Function for Reading Inputs via the Serial Monitor//////////////////////////////
 ///////////////////////////- PLEASE DO NOT MODIFY!/////////////////////////////////
-void readInput() 
+void readInput()
 {
     //if there is an input via the serial monitor read and parse it
-    if (Serial.available()) 
+    if (Serial.available())
     {
       spaceCount = 0;
       recFlag =1;
-      commandString = Serial.readStringUntil('\n'); //read received string 
+      commandString = Serial.readStringUntil('\n'); //read received string
       /////////////////PARSE INPUT//////////////////////////////////////////
-      //count the number of spaces in the string 
+      //count the number of spaces in the string
       for(int i=0; i<=commandString.length();i++){
         if(commandString.charAt(i)== ' '){
           spaceCount=spaceCount+1;
-        }         
+        }
       }
       //Check for the different input commands, extract the input paramters, convert them to integers and save the results in the sd-card buffer
       if (recFlag ==1 && spaceCount == 2 && (commandString.startsWith("amp") || commandString.startsWith("off"))){
@@ -206,13 +206,13 @@ void readInput()
             osc[(int) indexString.toInt()].targetAmplitude = (int) valueString.toInt();
           }else if(commandString.startsWith("off")){
             osc[(int) indexString.toInt()].targetOffset = (int) valueString.toInt();
-          } 
-          //save received command string to buffer    
+          }
+          //save received command string to buffer
           buffer += commandString;
           buffer += " ";
           buffer += "-";
           recFlag =0;
-      }else if (recFlag ==1 && spaceCount == 1 && (commandString.startsWith("freq") || (commandString.startsWith("weight")))){ 
+      }else if (recFlag ==1 && spaceCount == 1 && (commandString.startsWith("freq") || (commandString.startsWith("weight")))){
           // change the target frequency for all oscillators
           if(commandString.startsWith("freq")){
             valueString = commandString.substring(5, commandString.length());
@@ -221,14 +221,14 @@ void readInput()
             valueString = commandString.substring(7, commandString.length());
             w = (float) valueString.toFloat();
           }
-          //save received command string to buffer  
+          //save received command string to buffer
           buffer += commandString;
-          buffer += " ";  
+          buffer += " ";
           buffer += "-";
-          buffer += " "; 
+          buffer += " ";
           buffer += "-";
-          recFlag =0;        
-      } else if (recFlag ==1 && spaceCount == 3 && commandString.startsWith("phb")){ 
+          recFlag =0;
+      } else if (recFlag ==1 && spaceCount == 3 && commandString.startsWith("phb")){
           // change the phase bias between the two specified oscillators
           indexString = commandString.substring(4, 5);
           int index1 = (int) indexString.toInt();
@@ -237,23 +237,23 @@ void readInput()
           valueString = commandString.substring(8, commandString.length());
           osc[index1].phaseBias[index2] =  ((PI * valueString.toFloat())/180);//deg2rad!!! (float)
           osc[index2].phaseBias[index1] = -osc[index1].phaseBias[index2];
-          //save received command string to buffer  
+          //save received command string to buffer
           buffer += commandString;
-          recFlag =0;      
-      } else if (recFlag ==1 && spaceCount == 0 && commandString.startsWith("print")){ 
-          //save received command string to buffer  
+          recFlag =0;
+      } else if (recFlag ==1 && spaceCount == 0 && commandString.startsWith("print")){
+          //save received command string to buffer
           buffer += commandString;
-          buffer += " ";  
+          buffer += " ";
           buffer += "-";
-          buffer += " "; 
-          buffer += "-"; 
-          buffer += " "; 
+          buffer += " ";
+          buffer += "-";
+          buffer += " ";
           buffer += "-";
           recFlag =0;
           // print information about the current state of the oscillators
           Serial.print("Frequency: ");
           //Serial.println(frequency);
-          for (int i = 0; i < NUM_OSCILLATORS; i++) 
+          for (int i = 0; i < NUM_OSCILLATORS; i++)
           {
               Serial.print(i);
               Serial.print(": ");
@@ -286,11 +286,11 @@ void readInput()
           }
         //in case none of the above input variations is correct it is declared as an invalid input
         }else if (recFlag ==1){
-          //save received command string to buffer  
+          //save received command string to buffer
           buffer += "Invalid Input";
-          buffer += " "; 
-          buffer += "-"; 
-          buffer += " "; 
+          buffer += " ";
+          buffer += "-";
+          buffer += " ";
           buffer += "-";
           recFlag =0;
         }
@@ -299,11 +299,11 @@ void readInput()
       buffer += "-";
       buffer += " ";
       buffer += "-";
-      buffer += " ";  
+      buffer += " ";
       buffer += "-";
-      buffer += " "; 
-      buffer += "-"; 
-      buffer += " "; 
+      buffer += " ";
+      buffer += "-";
+      buffer += " ";
     }
 }
 
@@ -319,5 +319,5 @@ void readInput()
 //    if(motor < NUM_OSCILLATORS)
 //        calib[motor] = val;
 //    else
-//       Serial.println("Enter a valid motor number"); 
+//       Serial.println("Enter a valid motor number");
 //}
